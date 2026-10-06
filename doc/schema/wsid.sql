@@ -17,8 +17,36 @@ CREATE TABLE IF NOT EXISTS t_wsid_apply_row (
   update_by varchar(64) DEFAULT NULL COMMENT '更新者',
   update_time datetime DEFAULT NULL COMMENT '更新时间',
   remark varchar(500) DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_apply_row_batch_put_row (batch_no, put_kind, row_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标识申领名册核收行';
+
+-- 一串一册：同一串站所自录、县局代收各走一遍，各留各的收讫单面，(batch_no, put_kind) 唯一。
+-- 点行数（file_num）与册头写定的上限（row_limit）进门头一步刻死，隔半年仍查得回当初报了几行。
+CREATE TABLE IF NOT EXISTS t_wsid_apply_receipt (
+  id bigint NOT NULL COMMENT '主键',
+  batch_no varchar(64) DEFAULT NULL COMMENT '申领名册核收批次码（一串一个）',
+  put_kind varchar(32) DEFAULT NULL COMMENT '本面来路（站所自录／县局代收，两条来路各留一面）',
+  file_num int DEFAULT NULL COMMENT '进门点出的行数（空册为 0）',
+  row_limit int DEFAULT NULL COMMENT '册头那一处写定的本行数上限（空着/负数/没边的大数按 150 落）',
+  in_num int DEFAULT NULL COMMENT '收讫三笔·进门行（取自逐行定去处那一趟）',
+  ok_num int DEFAULT NULL COMMENT '收讫三笔·收下行',
+  back_num int DEFAULT NULL COMMENT '收讫三笔·退回行',
+  empty_flag int DEFAULT '0' COMMENT '空册记号 0正经串 1空册（空册只落「空册」字样，不出收讫那一句）',
+  face_kind int DEFAULT '0' COMMENT '单面来头 0头一遍 1第二遍只对照不改账',
+  hit_limit int DEFAULT '0' COMMENT '撞上限记号 0没撞 1点行数撞上上限已收手（余下另起一串）',
+  pending_num int DEFAULT NULL COMMENT '本面尚未定去处的行数（未勾行计数）',
+  rollback_num int DEFAULT '0' COMMENT '本面累计回撤摆回未勾的行数',
+  content varchar(1000) DEFAULT NULL COMMENT '单面文面（收讫那一句／空册字样／对照与回撤一记）',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_apply_receipt_batch_put (batch_no, put_kind)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标识申领名册核收批次收讫单面';
 
 CREATE TABLE IF NOT EXISTS t_wsid_case_flow (
   id bigint NOT NULL COMMENT '主键',
