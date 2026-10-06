@@ -5,20 +5,47 @@
 CREATE TABLE IF NOT EXISTS t_wsid_apply_row (
   id bigint NOT NULL COMMENT '主键',
   batch_no varchar(64) DEFAULT NULL COMMENT '申领名册核收批次码',
-  row_no int DEFAULT NULL COMMENT '原册行次',
+  row_no int DEFAULT NULL COMMENT '本串内系统排定的行次（同串再报沿用，不重新起步）',
   item_code varchar(64) DEFAULT NULL COMMENT '被对上的繁育主体册代号',
   qty decimal(12,2) DEFAULT NULL COMMENT '本行申领张数',
   chk_num decimal(12,2) DEFAULT NULL COMMENT '本行核对齐数',
   put_kind varchar(32) DEFAULT NULL COMMENT '来路（站所自录／县局代收两条来路）',
   status int DEFAULT NULL COMMENT '行落地情形 0未勾 1已收下 2已退回',
+  reject_reason varchar(255) DEFAULT NULL COMMENT '退回缘由（逐行可答，如「差 2 张」）',
   del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
   create_by varchar(64) DEFAULT NULL COMMENT '创建者',
   create_time datetime DEFAULT NULL COMMENT '创建时间',
   update_by varchar(64) DEFAULT NULL COMMENT '更新者',
   update_time datetime DEFAULT NULL COMMENT '更新时间',
   remark varchar(500) DEFAULT NULL COMMENT '备注',
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_wsid_apply_row_batch_rowno (batch_no, row_no)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标识申领名册核收行';
+
+-- 一串一份收讫单面；同一串走两回（站所自录／县局代收）各留一份，靠 (batch_no, put_kind) 区分
+CREATE TABLE IF NOT EXISTS t_wsid_apply_receipt (
+  id bigint NOT NULL COMMENT '主键',
+  batch_no varchar(64) DEFAULT NULL COMMENT '申领名册核收批次码（哪一串）',
+  put_kind varchar(32) DEFAULT NULL COMMENT '来路（站所自录／县局代收两条来路，第二遍照此另立一份）',
+  declared_limit int DEFAULT NULL COMMENT '册头写定的上限（原样刻档：空/负数/没边大数归一为 150）',
+  effective_limit int DEFAULT NULL COMMENT '实际认下的上限（缺省 150）',
+  reported_count int DEFAULT NULL COMMENT '点行所得（当初报了几行，原样刻档，隔半年查得回）',
+  enter_count int DEFAULT NULL COMMENT '进门落定笔数（收下+退回，恒等于后两笔之和）',
+  pending_count int DEFAULT NULL COMMENT '未勾待续笔数（两数缺一、本行不办，待续办补上）',
+  accepted_count int DEFAULT NULL COMMENT '收下笔数（取自逐行定去处那一趟）',
+  rejected_count int DEFAULT NULL COMMENT '退回笔数（取自逐行定去处那一趟）',
+  overflow_count int DEFAULT NULL COMMENT '撞上限后余下另起一串的行数',
+  receipt_kind int DEFAULT NULL COMMENT '单面情形 0空册 1已收讫 2只对照(第二遍) 3已回撤',
+  content varchar(255) DEFAULT NULL COMMENT '本串记要（空册字样／对照结论／回撤一截）',
+  del_flag int DEFAULT '0' COMMENT '删除标记 0正常 1删除',
+  create_by varchar(64) DEFAULT NULL COMMENT '创建者',
+  create_time datetime DEFAULT NULL COMMENT '创建时间',
+  update_by varchar(64) DEFAULT NULL COMMENT '更新者',
+  update_time datetime DEFAULT NULL COMMENT '更新时间',
+  remark varchar(500) DEFAULT NULL COMMENT '备注',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_wsid_apply_receipt_batch_put (batch_no, put_kind)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='标识申领名册收讫单面';
 
 CREATE TABLE IF NOT EXISTS t_wsid_case_flow (
   id bigint NOT NULL COMMENT '主键',

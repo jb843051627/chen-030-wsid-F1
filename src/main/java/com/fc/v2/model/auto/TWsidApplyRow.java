@@ -67,6 +67,11 @@ public class TWsidApplyRow implements Serializable {
     @ApiModelProperty(value = "行落地情形 0未勾 1已收下 2已退回")
     private Integer status;
 
+    /** 退回缘由（逐行可答，如「差 2 张」） */
+    @TableField("reject_reason")
+    @ApiModelProperty(value = "退回缘由（逐行可答，如「差 2 张」）")
+    private String rejectReason;
+
     /** 删除标记 0正常 1删除 */
     @TableField("del_flag")
     @ApiModelProperty(value = "删除标记 0正常 1删除")
@@ -161,6 +166,14 @@ public class TWsidApplyRow implements Serializable {
 
     public void setStatus(Integer status) {
         this.status = status;
+    }
+
+    public String getRejectReason() {
+        return rejectReason;
+    }
+
+    public void setRejectReason(String rejectReason) {
+        this.rejectReason = rejectReason;
     }
 
     public Integer getDelFlag() {
